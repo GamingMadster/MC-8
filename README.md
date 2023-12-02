@@ -21,12 +21,9 @@ Option 1:
 
 Option 2:
 
-1. Download the sketch.js file
-2. Open VS Code
-3. Install the P5.vscode and Live Server Plugins
-4. Create a new P5js project
-5. Replace the newly created sketch.js file with the downloaded one.
-6. Start the local server and have fun!
+1. Download the most recent source from the Releases.
+2. Make sure to install p5.vscode and the Live Server Plugins
+3. Open up the folder containing the source in VS Code and run the live server plugin to run the interpreter.
 
 # LINKS
 You can check out the Chip-8 Archive at https://github.com/JohnEarnest/chip8Archive for any ROMs you want to emulate.
