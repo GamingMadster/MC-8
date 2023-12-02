@@ -8,6 +8,7 @@ Chip-8 was originally an intepreter for the COSMAC VIP kit computer back in 1977
 While this is by far not the most optimized nor fastest out there. This is my very first attempt at a interpreter / emulator.
 
 There are certain bugs I still have to iron out.
+
 Also if you do decide to check the code out, be forewarned that it is messy.
 
 # How do I run this interpreter?
