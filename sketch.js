@@ -271,7 +271,7 @@ let keys = [
 
 class VM {
   constructor() {
-    this.framebuffer = new Uint8Array(2079);
+    this.framebuffer = new Uint8Array(2096);
     this.memory = new Uint16Array(4098);
     this.registers = new Uint8Array(16);
     this.stack = new Uint16Array(16);
@@ -292,7 +292,7 @@ function loadROM(file) {
   //console.log(file,file.name);
   ROMDATA = loadBytes(file.data, function callback() {
     CPU.PC = 0x200;
-    CPU.framebuffer = new Uint8Array(2079);
+    CPU.framebuffer = new Uint8Array(2096);
     CPU.memory = new Uint16Array(4098);
     CPU.registers = new Uint8Array(16);
     CPU.stack = new Uint16Array(16);
@@ -862,9 +862,9 @@ function Execute(decoded, val1, val2, val3) {
       while (VX3.length < 3) {
         VX3 = "0" + VX3;
       }
-      CPU.memory[CPU.I] = int(VX3[0]);
-      CPU.memory[CPU.I + 1] = int(VX3[1]);
-      CPU.memory[CPU.I + 2] = int(VX3[2]);
+      CPU.memory[CPU.I & 0xFFF] = int(VX3[0]);
+      CPU.memory[(CPU.I + 1) & 0xFFF] = int(VX3[1]);
+      CPU.memory[(CPU.I + 2) & 0xFFF] = int(VX3[2]);
       break;
 
     case "STOREVATI":
