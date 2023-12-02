@@ -29,4 +29,5 @@ Option 2:
 
 # LINKS
 You can check out the Chip-8 Archive at https://github.com/JohnEarnest/chip8Archive for any ROMs you want to emulate.
+
 If you're looking for a reference to make your own Chip-8 emulator, you can check out https://chip-8.github.io/links/ for most docs on the original Chip-8, along with some for other Chip variants.
