@@ -16,7 +16,7 @@ There are two ways to run this interpreter.
 Option 1:
 
 1. Download the sketch.js file
-2. Open the source in a text editor, and run it within the [Online P5js Editor](editor.p5js.org)
+2. Open the source in a text editor, and run it within the [Online P5js Editor](https://editor.p5js.org/)
 
 Option 2:
 
