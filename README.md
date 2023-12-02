@@ -9,6 +9,24 @@ While this is by far not the most optimized nor fastest out there. This is my ve
 
 There are certain bugs I still have to iron out.
 
+# How do I run this interpreter?
+
+There are two ways to run this interpreter.
+
+Option 1:
+
+1. Download the sketch.js
+2. Open the source in a text editor, and run it within editor.p5js.org
+
+Option 2:
+
+1. Download the sketch.js file
+2. Open VS Code
+3. Install the P5.vscode and Live Server Plugins
+4. Create a new P5js project
+5. Replace the newly created sketch.js file with the downloaded one.
+6. Start the local server and have fun!
+
 # LINKS
 You can check out the Chip-8 Archive at https://github.com/JohnEarnest/chip8Archive for any ROMs you want to emulate.
 If you're looking for a reference to make your own Chip-8 emulator, you can check out https://chip-8.github.io/links/ for most docs on the original Chip-8, along with some for other Chip variants.
