@@ -2,7 +2,7 @@
 MC-8 is a basic Chip-8 Interpreter/Emulator. It can play most roms for the original Chip-8.
 
 # What is Chip-8
-Chip-8 was originally an intepreter for the COSMAC VIP kit computer back in 1977. It was made to made to ease game development on this computer. Now, however, it is used as a way to allow novice emulator developers to make their way into the emulation development space.
+Chip-8 was originally an intepreter for the COSMAC VIP kit computer back in 1977. It was made to made to ease game development on that exact system. Now, however, it is used as a way to allow novice emulator developers to make their way into the emulation development space.
 
 # What is the current status of this interpreter?
 While this is by far not the most optimized nor fastest out there. This is my very first attempt at a interpreter / emulator.
