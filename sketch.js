@@ -20,6 +20,11 @@ var CorruptFB;
 
 var ClockSpeed;
 var DispWait;
+var DispGrid;
+var DispGrad;
+
+var BGColor;
+var FGColor;
 
 let pause = false;
 
@@ -382,6 +387,11 @@ function setup() {
   });
 
   DispWait = createCheckbox("Wait for VBlank", false);
+  DispGrid = createCheckbox("Display Grid", true)
+  DispGrad = createCheckbox("Display Grid Gradient",false)
+
+  BGColor = createColorPicker(EmuSettings.bg)
+  FGColor = createColorPicker(EmuSettings.fg)
 
   ////console.log(CPU.memory);
   ////console.log(ROMDATA.bytes);
@@ -391,6 +401,8 @@ function setup() {
 // fetch decode execute loop
 function draw() {
   EmuSettings.clockMulti = ClockSpeed.value();
+  EmuSettings.bg = BGColor.color()
+  EmuSettings.fg = FGColor.color()
 
   if (bringOver == true) {
     key = lastKey;
@@ -418,13 +430,21 @@ function draw() {
   colr.setAlpha(50);
   stroke(colr);
   
-  for (var x = 0; x < width; x += width/64){
-    line(x, 0, x, height);	
-  }
-  for (var y = 0; y < height; y += 1) {
-    colr.setAlpha((y%(width/64))*3);
-    stroke(colr)
-    line(0, y, width, y);
+  if(DispGrid.checked() == true){
+    for (var x = 0; x < width; x += width/64){
+      line(x, 0, x, height);	
+    }
+    if(DispGrad.checked() == true){
+      for (var y = 0; y < height; y += 1) {
+        colr.setAlpha((y%(width/64))*3);
+        stroke(colr)
+        line(0, y, width, y);
+      }
+    }else{
+      for (var y = 0; y < height; y += width/64) {
+        line(0, y, width, y);
+      }
+    }
   }
   
   var colr = color(0, 0, 0);
