@@ -14,6 +14,8 @@ let bringOver = false;
 let ROM;
 let ITF = 0;
 
+let graphics
+
 var CorruptFB;
 
 var ClockSpeed;
@@ -201,6 +203,24 @@ let font = [
 
 let program = [
   // program here!
+  // 0x60, 0x05,
+  // 0x30, 0x05,
+  // 0xA0, 0x00,
+  // 0x30, 0x05,
+  // 0x12, 0x0C,
+  // 0x12, 0x1E,
+  // 0x6D, 0x20,
+  // 0x6E, 0x10,
+  // 0xDD, 0xE5,
+  // 0xA0, 0x46,
+  // 0x6D, 0x1B,
+  // 0x6E, 0x10,
+  // 0xDD, 0xE5,
+  // 0x12, 0x1A,
+  // 0x40, 0x00,
+  // 0xA0, 0x05,
+  // 0x40, 0x00,
+  // 0x12, 0x0C,
 ];
 
 let bios = [
@@ -253,7 +273,7 @@ let keys = [
 
 class VM {
   constructor() {
-    this.framebuffer = new Uint8Array(2096);
+    this.framebuffer = new Uint8Array(2048);
     this.memory = new Uint16Array(4098);
     this.registers = new Uint8Array(16);
     this.stack = new Uint16Array(16);
@@ -274,7 +294,7 @@ function loadROM(file) {
   //console.log(file,file.name);
   ROMDATA = loadBytes(file.data, function callback() {
     CPU.PC = 0x200;
-    CPU.framebuffer = new Uint8Array(2096);
+    CPU.framebuffer = new Uint8Array(2048);
     CPU.memory = new Uint16Array(4098);
     CPU.registers = new Uint8Array(16);
     CPU.stack = new Uint16Array(16);
@@ -391,8 +411,6 @@ function draw() {
 
     //console.log("PC: "+CPU.PC+" - Instruction (HEX): "+hex(inst,4)+" - Decoded Instruction: "+decoded[0]+" - Full Instruction: "+decoded+" - DT: "+CPU.dtimer+" - ST: "+CPU.stimer);
   }
-
-  noSmooth();
   refreshScreen();
 
   var colr = color(0);
@@ -452,8 +470,6 @@ function windowResized() {
 function mousePressed() {
   userStartAudio();
 }
-
-
 
 // computing calls
 function Fetch() {
@@ -598,7 +614,9 @@ function Decode(inst) {
 function Execute(decoded, val1, val2, val3) {
   switch (decoded) {
     case "CLS":
-      CPU.framebuffer = new Uint8Array(2079);
+      for(let i = 0; i<CPU.framebuffer.length; i++){
+        CPU.framebuffer[i] = 0;
+      }
       break;
 
     case "RET":
@@ -750,8 +768,8 @@ function Execute(decoded, val1, val2, val3) {
         for (let o = r1 % 64; o < 8 + (r1 % 64); o++) {
           let letter = row[o - (r1 % 64)];
           if (letter == "1") {
-            if (CPU.framebuffer[o + i * 65] == 1) amt++;
-            CPU.framebuffer[o + i * 65] ^= 1;
+            if (CPU.framebuffer[o + i * 64] == 1) amt++;
+            CPU.framebuffer[o + i * 64] ^= 1;
           }
         }
       }
@@ -871,7 +889,7 @@ function Execute(decoded, val1, val2, val3) {
 }
 
 function refreshScreen() {
-  let graphics = createGraphics(64, 32);
+  graphics = createGraphics(64, 32);
   background(EmuSettings.bg);
   graphics.noStroke();
   graphics.fill(EmuSettings.fg);
@@ -882,7 +900,7 @@ function refreshScreen() {
       graphics.rect(x, y, 1, 1);
     }
     x++;
-    if (x > 64) {
+    if (x > 63) {
       x = 0;
       y++;
     }
