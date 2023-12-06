@@ -346,6 +346,8 @@ function setup() {
   frameRate(60);
   CPU = new VM();
 
+  graphics = createGraphics(64, 32);
+
   // setup Oscillators
   CPU.OSC = [
     new p5.Oscillator("square"),
@@ -909,8 +911,7 @@ function Execute(decoded, val1, val2, val3) {
 }
 
 function refreshScreen() {
-  graphics = createGraphics(64, 32);
-  background(EmuSettings.bg);
+  graphics.background(EmuSettings.bg);
   graphics.noStroke();
   graphics.fill(EmuSettings.fg);
   let x = 0;
