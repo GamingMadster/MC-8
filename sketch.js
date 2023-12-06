@@ -3,8 +3,8 @@ let EmuSettings = {
   clockMulti: 20, //only allows integer
 
   // customizable colors
-  bg: "#2F1F1F",
-  fg: "#FFDFDF",
+  bg: "#2f1f1f",
+  fg: "#FFdFdF",
 };
 
 let CPU;
@@ -22,6 +22,7 @@ var ClockSpeed;
 var DispWait;
 var DispGrid;
 var DispGrad;
+var Clipping;
 
 var BGColor;
 var FGColor;
@@ -347,6 +348,10 @@ function corrupt(type) {
   }
 }
 
+function keyPressed(){
+  if(key == "p")pause = !pause;
+}
+
 function setup() {
   console.clear();
 
@@ -401,8 +406,9 @@ function setup() {
   });
 
   DispWait = createCheckbox("Wait for VBlank", false);
-  DispGrid = createCheckbox("Display Grid", true)
-  DispGrad = createCheckbox("Display Grid Gradient",false)
+  DispGrid = createCheckbox("Display Grid", true);
+  DispGrad = createCheckbox("Display Grid Gradient",false);
+  Clipping = createCheckbox("Sprite Clipping", true);
 
   BGColor = createColorPicker(EmuSettings.bg)
   FGColor = createColorPicker(EmuSettings.fg)
@@ -414,6 +420,7 @@ function setup() {
 
 // fetch decode execute loop
 function draw() {
+  if(pause==true)return;
   EmuSettings.clockMulti = ClockSpeed.value();
   EmuSettings.bg = BGColor.color()
   EmuSettings.fg = FGColor.color()
@@ -490,6 +497,7 @@ function draw() {
   }
 
   if (keyIsPressed == true) {
+    
     lastKey = key;
     bringOver = true;
   }
@@ -780,45 +788,32 @@ function Execute(decoded, val1, val2, val3) {
       break;
 
     case "DRW":
-      if (ITF > 0 && DispWait.checked()) {
+      if(DispWait.checked()&&ITF>0){
         CPU.PC -= 2;
-        return "BRKCYCLE";
-      }
-
-      let r1 = CPU.registers[val1] % 64;
-      let r2 = CPU.registers[val2] % 32;
-      let height = val3;
-      if (height < 0 || height > 15) {
-        //console.error("INVALID HEIGHT ON DRAW INSTRUCTION AT PC 0x"+hex(CPU.PC-2,3));
         break;
       }
-      let gfxData = [];
-      for (let i = 0; gfxData.length < height; i++) {
-        let unhexed = CPU.memory[CPU.I + i].toString(2);
-        for (let p = 0; unhexed.length < 8; p++) {
-          unhexed = "0" + unhexed;
+      
+      CPU.registers[15] = 0;
+      
+      let posX = CPU.registers[val1] & 63;
+      let posY = CPU.registers[val2] & 31;
+      let sizeY = val3;
+      
+      let posXY = 0;
+      
+      for(let row = 0; row<sizeY; row++){
+        if(Clipping.checked()&&(row + posY)>31)break;
+        let data = CPU.memory[CPU.I + row];
+        
+        for(let col = 0; col<8; col++){
+          if(Clipping.checked()&&(col + posX)>63)break;
+          if(!(data >> (7-col) & 0x1))continue;
+          
+          posXY = (posX + col & 63) + (posY + row & 31) * 64;
+          
+          if(CPU.framebuffer[posXY])CPU.registers[15] = 1;
+          CPU.framebuffer[posXY] ^= 1;
         }
-        append(gfxData, unhexed);
-      }
-      //console.log("GFX: ",gfxData);
-
-      let amt = 0;
-
-      for (let i = 0; i < gfxData.length; i++) {
-        let row = gfxData[i];
-        for (let o = 0; o < row.length; o++) {
-          let letter = row[o];
-          if (letter == "1") {
-            if (CPU.framebuffer[(((o+r1)%65) + ((i+r2)%33) * 64)] == 1) amt++;
-            CPU.framebuffer[(((o+r1)%65) + ((i+r2)%33) * 64)] ^= 1;
-          }
-        }
-      }
-
-      if (amt > 0) {
-        CPU.registers[15] = 1;
-      } else {
-        CPU.registers[15] = 0;
       }
 
       break;
