@@ -14,7 +14,7 @@ let bringOver = false;
 let ROM;
 let ITF = 0;
 
-let graphics
+let graphics;
 
 var CorruptFB;
 
@@ -28,7 +28,7 @@ var FGColor;
 
 let pause = false;
 
-// IMPLEMENTED INSTRUCTIONS
+// IMPLEMENTED INSTRUCTIONS (CHIP 8)
 // 0NNN	Unused in Modern Interpreters.
 // 00E0	Clear the screen
 // 00EE	Return from a subroutine
@@ -64,6 +64,18 @@ let pause = false;
 // FX33	Store the binary-coded decimal equivalent of the value stored in register VX at addresses I, I + 1, and I + 2
 // FX55	Store the values of registers V0 to VX inclusive in memory starting at address I. I is set to I + X + 1 after operation
 // FX65	Fill registers V0 to VX inclusive with the values stored in memory starting at address I. I is set to I + X + 1 after operation
+
+// SUPER-CHIP
+// 00CN	Scroll display N lines down. When in normal (64x32) display mode; the display is scrolled by half-dots.
+// 00FB	Scroll display 4 dots right. When in normal (64x32) display mode; the display is scrolled by half-dots.
+// 00FC	Scroll display 4 dots left. When in normal (64x32) display mode; the display is scrolled by half-dots.
+// 00FD	Exit the interpreter. Modern interpreters should simply halt operation.
+// 00FE	Enable extended, 128x64 display mode. This should act as if the existing 64x32 screen buffer is divided to double the number of dots accessible (rather than increasing resolution in any direction).
+// 00FF	Disable extended display mode and revert to normal, 64x32 display mode. The existing screen buffer should be left unchanged.
+// DXY0	Show 16x16 sprite from I at coordinates (VX, VY). VF is still used for collision.
+// FX30	Point I to 10-byte font sprite for digit VX (originally this was restricted to <= 9 but as there is no harm in extending that to the full hex range, this is what xCHIP does).
+// FX75	Save V0..VX in persistent, shared memory (X <= 7)
+// FX85	Restore V0..VX in persistent, shared memory (X <= 7)
 
 // CUSTOM INSTRUCTIONS
 // FXA0 Set sound timer 2 to the value of register VX.
@@ -336,7 +348,7 @@ function corrupt(type) {
 }
 
 function setup() {
-  //console.clear();
+  console.clear();
 
   ROM = createFileInput(loadROM);
 
@@ -345,7 +357,7 @@ function setup() {
   noSmooth();
   frameRate(60);
   CPU = new VM();
-
+  
   graphics = createGraphics(64, 32);
 
   // setup Oscillators
@@ -423,7 +435,7 @@ function draw() {
 
     ITF++;
 
-    //console.log("PC: "+CPU.PC+" - Instruction (HEX): "+hex(inst,4)+" - Decoded Instruction: "+decoded[0]+" - Full Instruction: "+decoded+" - DT: "+CPU.dtimer+" - ST: "+CPU.stimer);
+    if(decoded[0]=="BRK")console.log("PC: "+CPU.PC+" - Instruction (HEX): "+hex(inst,4)+" - Decoded Instruction: "+decoded[0]+" - Full Instruction: "+decoded+" - DT: "+CPU.dtimer+" - ST: "+CPU.stimer);
   }
   refreshScreen();
 
@@ -432,18 +444,20 @@ function draw() {
   colr.setAlpha(50);
   stroke(colr);
   
+  var PxlScale = (width/64)/round((CPU.framebuffer.length/64/32)/2)
+  
   if(DispGrid.checked() == true){
-    for (var x = 0; x < width; x += width/64){
+    for (var x = 0; x < width; x += PxlScale){
       line(x, 0, x, height);	
     }
     if(DispGrad.checked() == true){
       for (var y = 0; y < height; y += 1) {
-        colr.setAlpha((y%(width/64))*3);
+        colr.setAlpha((y%(PxlScale))*(CPU.framebuffer.length/64/32)*3);
         stroke(colr)
         line(0, y, width, y);
       }
     }else{
-      for (var y = 0; y < height; y += width/64) {
+      for (var y = 0; y < height; y += PxlScale) {
         line(0, y, width, y);
       }
     }
@@ -523,12 +537,17 @@ function Fetch() {
 function Decode(inst) {
   let combined = inst & 0x0FFF;
   let combined2 = inst & 0x00FF;
+  let v1 = (inst&0x0F00)/0x0100;
+  let v2 = (inst&0x00F0)/0x0010;
   let r1 = CPU.registers[(inst&0x0F00)/0x0100];
   let r2 = CPU.registers[(inst&0x00F0)/0x0010];
   switch (floor(inst/0x1000)) {
     case 0x0:
       if (combined2 == 0x00E0) return ["CLS"];
       if (combined2 == 0x00EE) return ["RET"];
+      if (v2 == 0xC) return["SCRLD",inst&0x000F];
+      if (combined2 == 0x00FE) return ["LORES"];
+      if (combined2 == 0x00FF) return ["HIRES"];
       return ["BRK"];
 
     case 0x1:
@@ -648,7 +667,7 @@ function Execute(decoded, val1, val2, val3) {
       break;
 
     case "BRK":
-      CPU.PC -= 2;
+      //CPU.PC -= 2;
       break;
 
     case "JP":
@@ -766,8 +785,8 @@ function Execute(decoded, val1, val2, val3) {
         return "BRKCYCLE";
       }
 
-      let r1 = CPU.registers[val1];
-      let r2 = CPU.registers[val2];
+      let r1 = CPU.registers[val1] % 64;
+      let r2 = CPU.registers[val2] % 32;
       let height = val3;
       if (height < 0 || height > 15) {
         //console.error("INVALID HEIGHT ON DRAW INSTRUCTION AT PC 0x"+hex(CPU.PC-2,3));
@@ -785,13 +804,13 @@ function Execute(decoded, val1, val2, val3) {
 
       let amt = 0;
 
-      for (let i = r2 % 32; i < height + (r2 % 32); i++) {
-        let row = gfxData[i - (r2 % 32)];
-        for (let o = r1 % 64; o < 8 + (r1 % 64); o++) {
-          let letter = row[o - (r1 % 64)];
+      for (let i = 0; i < gfxData.length; i++) {
+        let row = gfxData[i];
+        for (let o = 0; o < row.length; o++) {
+          let letter = row[o];
           if (letter == "1") {
-            if (CPU.framebuffer[o + i * 64] == 1) amt++;
-            CPU.framebuffer[o + i * 64] ^= 1;
+            if (CPU.framebuffer[(((o+r1)%65) + ((i+r2)%33) * 64)] == 1) amt++;
+            CPU.framebuffer[(((o+r1)%65) + ((i+r2)%33) * 64)] ^= 1;
           }
         }
       }
@@ -902,15 +921,37 @@ function Execute(decoded, val1, val2, val3) {
       }
       CPU.I += (val1 + 1) & 0xfff;
       break;
+      
+    case "SCRLD":
+      for(let o = 0; o<val1; o++){
+        for (let i = CPU.framebuffer.length-64; i > 0; i--){
+          CPU.framebuffer[i] = CPU.framebuffer[i-64];
+        }
+      }
+      break;
+      
+    case "LORES":
+      var old = CPU.framebuffer;
+      CPU.framebuffer = new Uint8Array(2048);
+      for(let i = 0; i<CPU.framebuffer.length; i++){
+        CPU.framebuffer[i] = old[i];
+      }
+      break;
+      
+    case "HIRES":
+      CPU.framebuffer = new Uint8Array(8192);
+      break;
 
     default:
-      //console.error("INSTRUCTION: "+decoded+" DOES NOT EXIST.")
+      console.error("INSTRUCTION: "+decoded+" DOES NOT EXIST.")
       noLoop();
       break;
   }
 }
 
 function refreshScreen() {
+  let PxlScale = round((CPU.framebuffer.length/64/32)/2);
+  graphics.resizeCanvas(64*PxlScale,32*PxlScale);
   graphics.background(EmuSettings.bg);
   graphics.noStroke();
   graphics.fill(EmuSettings.fg);
