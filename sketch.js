@@ -1,3 +1,5 @@
+p5.disableFriendlyErrors = true;
+
 let EmuSettings = {
   USEROMFILE: true,
   clockMulti: 20, //only allows integer
@@ -9,8 +11,6 @@ let EmuSettings = {
 
 let CPU;
 let ROMDATA;
-let lastKey;
-let bringOver = false;
 let ROM;
 let ITF = 0;
 
@@ -364,22 +364,22 @@ let bios = [
 ];
 
 let keys = [
-  "x",
-  "1",
-  "2",
-  "3",
-  "q",
-  "w",
-  "e",
-  "a",
-  "s",
-  "d",
-  "z",
-  "c",
-  "4",
-  "r",
-  "f",
-  "v",
+  88,
+  49,
+  50,
+  51,
+  81,
+  87,
+  69,
+  65,
+  83,
+  68,
+  90,
+  67,
+  52,
+  82,
+  70,
+  86,
 ];
 
 class VM {
@@ -532,11 +532,6 @@ function draw() {
   EmuSettings.bg = BGColor.color()
   EmuSettings.fg = FGColor.color()
 
-  if (bringOver == true) {
-    key = lastKey;
-    bringOver = false;
-  }
-
   ITF = 0;
 
   for (let i = 0; i < EmuSettings.clockMulti; i++) {
@@ -602,12 +597,7 @@ function draw() {
       CPU.OSC[o].amp(0, 0);
     }
   }
-
-  if (keyIsPressed == true) {
-    
-    lastKey = key;
-    bringOver = true;
-  }
+  
   key = undefined;
 }
 
@@ -926,21 +916,20 @@ function Execute(decoded, val1, val2, val3) {
       break;
 
     case "SKIPPRESSED":
-      if (key == undefined) {
+      if (keyIsDown(keys[CPU.registers[val1]])) {
+        CPU.PC+=2;
+        break;
+      }else{
         break;
       }
-      //console.log("SKIPPRESSED register asked: "+unhex(val1+" - register value: "+CPU.registers[unhex(val1]+" - Index of Key: "+keys.indexOf(key));
-      if (CPU.registers[val1 & 0xf] == keys.indexOf(key)) CPU.PC += 2;
       break;
 
     case "SKIPNOTPRESSED":
-      if (key == undefined) {
-        CPU.PC += 2;
+      if (keyIsDown(keys[CPU.registers[val1]])) {
         break;
-      }
-      //console.log("SKIPNOTPRESSED - register asked: "+unhex(val1+" - register value: "+CPU.registers[unhex(val1]+" - Index of Key: "+keys.indexOf(key));
-      if (CPU.registers[val1 & 0xf] != keys.indexOf(key)) {
-        CPU.PC += 2;
+      }else{
+        CPU.PC+=2;
+        break;
       }
       break;
 
